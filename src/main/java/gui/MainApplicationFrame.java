@@ -44,6 +44,7 @@ public class MainApplicationFrame extends JFrame
 
         // Установка операции по закрытию окна приложения
         setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
         // Добавление обработки для события закрытия окна
         addWindowListener(new WindowAdapter() {
