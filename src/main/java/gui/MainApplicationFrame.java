@@ -1,12 +1,11 @@
 package gui;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-
+import java.awt.*;
+import java.awt.event.*;
+import java.beans.PropertyVetoException;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import javax.swing.*;
 
 import log.Logger;
@@ -14,6 +13,31 @@ import log.Logger;
 public class MainApplicationFrame extends JFrame
 {
     private final JDesktopPane desktopPane = new JDesktopPane();
+
+    public HashMap<String, Object> getProperties(JInternalFrame frame) {
+        // Создание HashMap для хранения свойств
+        HashMap<String, Object> result = new HashMap<String, Object>();
+
+        // Добавление свойства "Местоположение" в HashMap
+        result.put("Местоположение", frame.getLocation());
+
+        // Добавление свойства "Размер" в HashMap
+        result.put("Размер", frame.getSize());
+
+        // Добавление свойства "Выбран" в HashMap
+        result.put("Выбран", frame.isSelected());
+
+        // Проверка, является ли frame экземпляром LogWindow
+        // Добавление свойства "Тип" как "Журнал"
+        if (frame instanceof LogWindow)
+            result.put("Тип", "Журнал");
+            // Проверка, является ли frame экземпляром GameWindow
+            // Добавление свойства "Тип" как "Игра"
+        else if (frame instanceof GameWindow)
+            result.put("Тип", "Игра");
+        // Возврат HashMap, содержащего свойства
+        return result;
+    }
 
     /**
      * Конструктор класса MainApplicationFrame создает главное окно приложения.
@@ -25,53 +49,68 @@ public class MainApplicationFrame extends JFrame
         int inset = 50;
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setBounds(inset, inset,
-                screenSize.width  - inset*2,
-                screenSize.height - inset*2);
+                screenSize.width - inset * 2,
+                screenSize.height - inset * 2);
 
-        // Установка содержимого окна в виде рабочей области
         setContentPane(desktopPane);
-
-        // Создание и добавление окна для логирования
-        LogWindow logWindow = createLogWindow();
-        addWindow(logWindow);
-
-        // Создание и добавление окна для игры
-        GameWindow gameWindow = new GameWindow();
-        gameWindow.setSize(400, 400);
-        addWindow(gameWindow);
-
         setJMenuBar(generateMenuBar());
 
-        // Установка операции по закрытию окна приложения
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-
-        // Добавление обработки для события закрытия окна
+        // Добавляем слушатель оконных событий
         addWindowListener(new WindowAdapter() {
+            @Override
             public void windowClosing(WindowEvent e) {
                 exitWindow();
             }
         });
+
+        try (FileInputStream is = new FileInputStream("./temp.out")) {
+            try {
+                ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(is));
+                try {
+                    ArrayList<HashMap<String, Object>> restored = (ArrayList<HashMap<String, Object>>) ois.readObject();
+                    for (HashMap<String, Object> frame : restored) {
+                        if (frame.get("Тип").equals("Журнал")) {
+                            LogWindow logWindow = createLogWindow();
+                            logWindow.setLocation((Point) frame.get("Местоположение"));
+                            logWindow.setSize((Dimension) frame.get("Размер"));
+                            logWindow.setSelected((boolean) frame.get("Выбран"));
+                            addWindow(logWindow, 150, 350);
+                        }
+                        if (frame.get("Тип").equals("Игра")) {
+                            GameWindow gameWindow = new GameWindow();
+                            gameWindow.setLocation((Point) frame.get("Местоположение"));
+                            gameWindow.setSize((Dimension) frame.get("Размер"));
+                            gameWindow.setSelected((boolean) frame.get("Выбран"));
+                            addWindow(gameWindow, 400, 400);
+                        }
+                    }
+                } catch (ClassNotFoundException ex) {
+                    ex.printStackTrace();
+                } catch (PropertyVetoException e) {
+                    e.printStackTrace();
+                } finally {
+                    ois.close();
+                }
+            } finally {
+                is.close();
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
     /**
-     * Метод createLogWindow создает и настраивает окно логирования.
-     * Окно получает логгер по умолчанию и устанавливает его расположение, размер,
-     * минимальный размер окна, и затем упаковывает содержимое.
-     * Также, выводится отладочное сообщение в лог о успешной инициализации логгера.
+     * Создает окно журнала.
      */
-    protected LogWindow createLogWindow()
-    {
+    protected LogWindow createLogWindow() {
+        // Создание экземпляра окна журнала с использованием
+        // стандартного источника журнала
         LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
-        logWindow.setLocation(10,10);
-        logWindow.setSize(300, 800);
 
-        // Установка минимального размера окна
-        setMinimumSize(logWindow.getSize());
-        logWindow.pack();
+        // Вывод отладочного сообщения о начале работы протокола
+        Logger.debug(("Протокол Работает"));
 
-        // Вывод отладочного сообщения о успешной инициализации логгера
-        Logger.debug("Протокол работает");
+        // Возвращение созданного окна журнала
         return logWindow;
     }
 
@@ -79,12 +118,9 @@ public class MainApplicationFrame extends JFrame
      * Метод addWindow добавляет внутреннее окно типа JInternalFrame к рабочей области desktopPane.
      * Устанавливает видимость добавленного окна.
      */
-    protected void addWindow(JInternalFrame frame)
-    {
-        // Добавление внутреннего окна к рабочей области
+    protected void addWindow(JInternalFrame frame, int width, int height) {
         desktopPane.add(frame);
-
-        // Установка видимости добавленного окна
+        frame.setSize(width, height);
         frame.setVisible(true);
     }
 
@@ -92,65 +128,59 @@ public class MainApplicationFrame extends JFrame
      * Метод generateMenuBar создает и возвращает строку меню (JMenuBar) для главного окна приложения.
      * Включает в себя различные подменю, такие как меню файла, меню внешнего вида и тестовые команды.
      */
-    private JMenuBar generateMenuBar()
-    {
+    private JMenuBar generateMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
-        // Добавление меню файла
-        JMenu menu = createMenuBar();
-        menuBar.add(menu);
+        menuBar.add(createMenuBar());
 
-        // Добавление меню внешнего вида
-        JMenu lookAndFeelMenu = createLookAndFeelMenu();
-        menuBar.add(lookAndFeelMenu);
+        menuBar.add(createLookAndFeelMenu());
 
-        // Добавление меню тестовых команд
-        JMenu testMenu = createTestMenu();
-        menuBar.add(testMenu);
+        menuBar.add(createTestMenu());
 
         return menuBar;
     }
 
     /**
      * Метод createMenuBar создает и возвращает меню для раздела "Меню" в строке меню приложения.
-     * Включает в себя пункты меню для создания нового игрового поля, открытия окна логов
-     * и выхода из приложения.
+     * Включает в себя пункты меню для создания нового игрового поля, открытия окна логов.
      */
     private JMenu createMenuBar() {
-        JMenu menu = new JMenu("Меню");
+
+        JMenu menu = new JMenu(("Меню"));
         menu.setMnemonic(KeyEvent.VK_D);
 
-        // Пункт меню для создания нового игрового поля
-        JMenuItem menuItem = new JMenuItem("Новое игровое поле");
-        menuItem.setMnemonic(KeyEvent.VK_N);
-        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.ALT_MASK));
-        menuItem.addActionListener((event) -> {
-            GameWindow newGameWindow = new GameWindow();
-            newGameWindow.setSize(400, 400);
-            addWindow(newGameWindow);
-        });
-        menu.add(menuItem);
+        menu.add(createMenuItem(("Новое игровое окно"), KeyEvent.VK_N, KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.ALT_MASK), (event) -> {
+            GameWindow window = new GameWindow();
+            addWindow(window, 400, 400);
+        }));
 
-        // Пункт меню для открытия окна логов
-        JMenuItem LogItem = new JMenuItem("Окно логов");
-        LogItem.setMnemonic(KeyEvent.VK_L);
-        LogItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.ALT_MASK));
-        LogItem.addActionListener((event) -> {
-            LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
-            addWindow(logWindow);
-        });
-        menu.add(LogItem);
 
-        // Пункт меню для выхода из приложения
-        JMenuItem exitMenuItem = new JMenuItem("Выход");
-        exitMenuItem.setMnemonic(KeyEvent.VK_Q);
-        exitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.ALT_MASK));
-        exitMenuItem.addActionListener((event) -> {
-            exitWindow();
-        });
-        menu.add(exitMenuItem);
+        menu.add(createMenuItem(("Журнальное окно"), KeyEvent.VK_L, KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.ALT_MASK), (event) -> {
+            LogWindow window = new LogWindow(Logger.getDefaultLogSource());
+            addWindow(window, 150, 350);
+        }));
+
+        menu.add(exit());
 
         return menu;
+    }
+
+    /**
+     * Создает элемент меню.
+     */
+    private JMenuItem createMenuItem(String text, int mnemonic, KeyStroke accelerator, ActionListener action) {
+        // Создание нового элемента меню с указанным текстом
+        JMenuItem item = new JMenuItem(text);
+
+        // Установка мнемоники для быстрого доступа к элементу меню
+        item.setMnemonic(mnemonic);
+        // Установка сочетания клавиш для быстрого доступа к элементу меню
+        item.setAccelerator(accelerator);
+        // Установка слушателя действий для элемента меню
+        item.addActionListener(action);
+
+        return item;
+
     }
 
     /**
@@ -158,26 +188,41 @@ public class MainApplicationFrame extends JFrame
      * Включает в себя пункты меню для установки системной и универсальной схем отображения приложения.
      */
     private JMenu createLookAndFeelMenu() {
-        JMenu lookAndFeelMenu = new JMenu("Режим отображения");
+        JMenu lookAndFeelMenu = new JMenu(("Дисплей"));
         lookAndFeelMenu.setMnemonic(KeyEvent.VK_V);
-        lookAndFeelMenu.getAccessibleContext().setAccessibleDescription("Управление режимом отображения приложения");
-        // Пункт меню для установки системной схемы
-        JMenuItem systemLookAndFeel = new JMenuItem("Системная схема", KeyEvent.VK_S);
-        systemLookAndFeel.addActionListener((event) -> {
+        lookAndFeelMenu.getAccessibleContext().setAccessibleDescription(("Управление режимом отображения приложения"));
+
+        lookAndFeelMenu.add(createMenuItem(("Системная схема"), KeyEvent.VK_S, null, (event) -> {
             setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             this.invalidate();
-        });
-        lookAndFeelMenu.add(systemLookAndFeel);
+        }));
 
-        // Пункт меню для установки универсальной схемы
-        JMenuItem crossplatformLookAndFeel = new JMenuItem("Универсальная схема", KeyEvent.VK_U);
-        crossplatformLookAndFeel.addActionListener((event) -> {
+        lookAndFeelMenu.add(createMenuItem(("Универсальная схема"), KeyEvent.VK_U, null, (event) -> {
             setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
             this.invalidate();
-        });
-        lookAndFeelMenu.add(crossplatformLookAndFeel);
+        }));
 
         return lookAndFeelMenu;
+    }
+
+    /**
+     * Создает элемент меню для выхода из приложения.
+     */
+    private JMenuItem exit()
+    {
+        // Создание элемента меню для выхода с указанным текстом
+        JMenuItem exitMenuItem = new JMenuItem(("Выход"));
+
+        // Установка мнемоники для быстрого доступа к элементу меню
+        exitMenuItem.setMnemonic(KeyEvent.VK_Q);
+        // Установка сочетания клавиш для быстрого доступа к элементу меню
+        exitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.ALT_MASK));
+        // Установка слушателя действий для элемента меню
+        exitMenuItem.addActionListener((event) -> {
+            exitWindow();
+        });
+        return exitMenuItem;
+
     }
 
     /**
@@ -185,14 +230,13 @@ public class MainApplicationFrame extends JFrame
      * Включает в себя пункт меню для добавления сообщения в лог.
      */
     private JMenu createTestMenu() {
-        JMenu testMenu = new JMenu("Тесты");
+        JMenu testMenu = new JMenu(("Тесты"));
         testMenu.setMnemonic(KeyEvent.VK_T);
-        testMenu.getAccessibleContext().setAccessibleDescription("Тестовые команды");
+        testMenu.getAccessibleContext().setAccessibleDescription(("Команды тестов"));
 
-        // Пункт меню для добавления сообщения в лог
-        JMenuItem addLogMessageItem = new JMenuItem("Сообщение в лог", KeyEvent.VK_S);
+        JMenuItem addLogMessageItem = new JMenuItem(("Сообщение в журнал"), KeyEvent.VK_S);
         addLogMessageItem.addActionListener((event) -> {
-            Logger.debug("Новая строка");
+            Logger.debug(("Новая строка"));
         });
         testMenu.add(addLogMessageItem);
 
@@ -209,7 +253,6 @@ public class MainApplicationFrame extends JFrame
             SwingUtilities.updateComponentTreeUI(this);
         } catch (ClassNotFoundException | InstantiationException
                  | IllegalAccessException | UnsupportedLookAndFeelException e) {
-            // Просто игнорируем возможные ошибки установки внешнего вида
         }
     }
 
@@ -220,15 +263,39 @@ public class MainApplicationFrame extends JFrame
      */
     private void exitWindow() {
         // Установка текста для кнопок подтверждения
-        UIManager.put("OptionPane.yesButtonText", "Да");
-        UIManager.put("OptionPane.noButtonText", "Нет");
-
+        UIManager.put("OptionPane.yesButtonText", ("Да"));
+        UIManager.put("OptionPane.noButtonText", ("Нет"));
         // Отображение диалогового окна с подтверждением выхода
-        int confirmation = JOptionPane.showConfirmDialog(this, "Вы, действительно, что хотите выйти?", "Подтверждение выхода", JOptionPane.YES_NO_OPTION);
-
+        int confirmation = JOptionPane.showConfirmDialog(this, ("Вы, действительно, что хотите выйти?"), ("Подтверждение выхода"), JOptionPane.YES_NO_OPTION);
         // Закрытие окна при подтверждении выхода
         if (confirmation == JOptionPane.YES_OPTION) {
+            save();
             this.dispose();
         }
     }
+
+
+    /**
+     * Сохраняет состояние окон на рабочем столе в файл.
+     * Каждое окно представляется в виде HashMap<String, Object>, содержащего его свойства.
+     */
+    private void save(){
+        ArrayList<HashMap<String, Object>> frames = new ArrayList<HashMap<String, Object>>();
+        for (JInternalFrame frame : desktopPane.getAllFrames())
+        {
+            frames.add(getProperties(frame));
+        }
+        FileOutputStream fos;
+        try {
+            fos = new FileOutputStream("./temp.out");
+            ObjectOutputStream oos;
+            oos = new ObjectOutputStream(fos);
+            oos.writeObject(frames);
+            oos.flush();
+            oos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
