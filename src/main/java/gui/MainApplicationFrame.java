@@ -2,11 +2,11 @@ package gui;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyVetoException;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.*;
+
 
 import log.Logger;
 
@@ -26,6 +26,9 @@ public class MainApplicationFrame extends JFrame
 
         // Добавление свойства "Выбран" в HashMap
         result.put("Выбран", frame.isSelected());
+
+        //Добавление свернутого окна
+        result.put("Свернут", frame.isIcon());
 
         // Проверка, является ли frame экземпляром LogWindow
         // Добавление свойства "Тип" как "Журнал"
@@ -62,41 +65,71 @@ public class MainApplicationFrame extends JFrame
                 exitWindow();
             }
         });
+        start.restoreWindows(this);
+    }
 
-        try (FileInputStream is = new FileInputStream("./saves.out")) {
-            try {
-                ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(is));
-                try {
-                    ArrayList<HashMap<String, Object>> restored = (ArrayList<HashMap<String, Object>>) ois.readObject();
-                    for (HashMap<String, Object> frame : restored) {
-                        if (frame.get("Тип").equals("Журнал")) {
-                            LogWindow logWindow = createLogWindow();
-                            logWindow.setLocation((Point) frame.get("Местоположение"));
-                            logWindow.setSize((Dimension) frame.get("Размер"));
-                            logWindow.setSelected((boolean) frame.get("Выбран"));
-                            addWindow(logWindow, 150, 350);
-                        }
-                        if (frame.get("Тип").equals("Игра")) {
-                            GameWindow gameWindow = new GameWindow();
-                            gameWindow.setLocation((Point) frame.get("Местоположение"));
-                            gameWindow.setSize((Dimension) frame.get("Размер"));
-                            gameWindow.setSelected((boolean) frame.get("Выбран"));
-                            addWindow(gameWindow, 400, 400);
-                        }
-                    }
-                } catch (ClassNotFoundException ex) {
-                    ex.printStackTrace();
-                } catch (PropertyVetoException e) {
-                    e.printStackTrace();
-                } finally {
-                    ois.close();
-                }
-            } finally {
-                is.close();
+
+    public class start {
+
+        public static void restoreWindows(MainApplicationFrame mainAppFrame) {
+            String userHomeDir = System.getProperty("user.home");
+            File configFile = new File(userHomeDir, "saves.out");
+            if (!configFile.exists()) {
+                return; // Если файл конфигурации не существует, нет необходимости восстанавливать окна
             }
-        } catch (IOException ex) {
-            ex.printStackTrace();
+
+            try (FileInputStream is = new FileInputStream(configFile)) {
+                try {
+                    ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(is));
+                    try {
+                        ArrayList<HashMap<String, Object>> restored = (ArrayList<HashMap<String, Object>>) ois.readObject();
+                        for (HashMap<String, Object> frame : restored) {
+                            if (frame.get("Тип").equals("Журнал")) {
+                                try {
+                                    LogWindow logWindow = mainAppFrame.createLogWindow();
+                                    logWindow.setLocation((java.awt.Point) frame.get("Местоположение"));
+                                    logWindow.setSize((java.awt.Dimension) frame.get("Размер"));
+                                    logWindow.setSelected((boolean) frame.get("Выбран"));
+                                    mainAppFrame.addWindow(logWindow, logWindow.getSize().width, logWindow.getSize().height); // Добавлено окно перед установкой свернутости
+                                    if ((boolean) frame.get("Свернут")) {
+                                        logWindow.setIcon(true);
+                                    }
+                                } catch (java.beans.PropertyVetoException e) {
+                                    System.err.println("Ошибка при создании и добавлении окна журнала: " + e.getMessage());
+                                    // Продолжаем восстановление следующего окна
+                                    continue;
+                                }
+                            }
+                            if (frame.get("Тип").equals("Игра")) {
+                                try {
+                                    GameWindow gameWindow = new GameWindow();
+                                    gameWindow.setLocation((java.awt.Point) frame.get("Местоположение"));
+                                    gameWindow.setSize((java.awt.Dimension) frame.get("Размер"));
+                                    gameWindow.setSelected((boolean) frame.get("Выбран"));
+                                    mainAppFrame.addWindow(gameWindow, gameWindow.getSize().width, gameWindow.getSize().height); // Добавлено окно перед установкой свернутости
+                                    if ((boolean) frame.get("Свернут")) {
+                                        gameWindow.setIcon(true);
+                                    }
+                                } catch (java.beans.PropertyVetoException e) {
+                                    System.err.println("Ошибка при создании и добавлении игрового окна: " + e.getMessage());
+
+                                }
+                            }
+                        }
+                    } catch (ClassNotFoundException ex) {
+                        ex.printStackTrace();
+                    } finally {
+                        ois.close();
+                    }
+                } finally {
+                    is.close();
+                }
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
         }
+
+
     }
 
     /**
@@ -276,21 +309,23 @@ public class MainApplicationFrame extends JFrame
     }
 
 
+
     /**
      * Сохраняет состояние окон на рабочем столе в файл.
      * Каждое окно представляется в виде HashMap<String, Object>, содержащего его свойства.
      */
-    private void save(){
+    private void save() {
         ArrayList<HashMap<String, Object>> frames = new ArrayList<>();
-        for (JInternalFrame frame : desktopPane.getAllFrames())
-        {
+        for (JInternalFrame frame : desktopPane.getAllFrames()) {
             frames.add(getProperties(frame));
         }
-        FileOutputStream fos;
+
+        String userHomeDir = System.getProperty("user.home");
+        File configFile = new File(userHomeDir, "saves.out");
+
         try {
-            fos = new FileOutputStream("./saves.out");
-            ObjectOutputStream oos;
-            oos = new ObjectOutputStream(fos);
+            FileOutputStream fos = new FileOutputStream(configFile);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
             oos.writeObject(frames);
             oos.flush();
             oos.close();
