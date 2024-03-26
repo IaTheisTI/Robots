@@ -63,7 +63,7 @@ public class MainApplicationFrame extends JFrame
             }
         });
 
-        try (FileInputStream is = new FileInputStream("./temp.out")) {
+        try (FileInputStream is = new FileInputStream("./saves.out")) {
             try {
                 ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(is));
                 try {
@@ -271,6 +271,7 @@ public class MainApplicationFrame extends JFrame
         if (confirmation == JOptionPane.YES_OPTION) {
             save();
             this.dispose();
+            System.exit(0);
         }
     }
 
@@ -280,14 +281,14 @@ public class MainApplicationFrame extends JFrame
      * Каждое окно представляется в виде HashMap<String, Object>, содержащего его свойства.
      */
     private void save(){
-        ArrayList<HashMap<String, Object>> frames = new ArrayList<HashMap<String, Object>>();
+        ArrayList<HashMap<String, Object>> frames = new ArrayList<>();
         for (JInternalFrame frame : desktopPane.getAllFrames())
         {
             frames.add(getProperties(frame));
         }
         FileOutputStream fos;
         try {
-            fos = new FileOutputStream("./temp.out");
+            fos = new FileOutputStream("./saves.out");
             ObjectOutputStream oos;
             oos = new ObjectOutputStream(fos);
             oos.writeObject(frames);
