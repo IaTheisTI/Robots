@@ -58,79 +58,63 @@ public class MainApplicationFrame extends JFrame
         setContentPane(desktopPane);
         setJMenuBar(generateMenuBar());
 
+        // Установка действия по умолчанию при закрытии окна
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+
         // Добавляем слушатель оконных событий
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
+                // Отображение диалогового окна с подтверждением выхода
                 exitWindow();
             }
         });
+
+
         start.restoreWindows(this);
     }
 
 
     public class start {
-
         public static void restoreWindows(MainApplicationFrame mainAppFrame) {
-            String userHomeDir = System.getProperty("user.home");
-            File configFile = new File(userHomeDir, "saves.out");
+            File configFile = new File(System.getProperty("user.home"), "saves.out");
+
             if (!configFile.exists()) {
-                return; // Если файл конфигурации не существует, нет необходимости восстанавливать окна
+                return; // Если файл конфигурации не существует, выходим
             }
 
-            try (FileInputStream is = new FileInputStream(configFile)) {
-                try {
-                    ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(is));
-                    try {
-                        ArrayList<HashMap<String, Object>> restored = (ArrayList<HashMap<String, Object>>) ois.readObject();
-                        for (HashMap<String, Object> frame : restored) {
-                            if (frame.get("Тип").equals("Журнал")) {
-                                try {
-                                    LogWindow logWindow = mainAppFrame.createLogWindow();
-                                    logWindow.setLocation((java.awt.Point) frame.get("Местоположение"));
-                                    logWindow.setSize((java.awt.Dimension) frame.get("Размер"));
-                                    logWindow.setSelected((boolean) frame.get("Выбран"));
-                                    mainAppFrame.addWindow(logWindow, logWindow.getSize().width, logWindow.getSize().height); // Добавлено окно перед установкой свернутости
-                                    if ((boolean) frame.get("Свернут")) {
-                                        logWindow.setIcon(true);
-                                    }
-                                } catch (java.beans.PropertyVetoException e) {
-                                    System.err.println("Ошибка при создании и добавлении окна журнала: " + e.getMessage());
-                                    // Продолжаем восстановление следующего окна
-                                    continue;
-                                }
-                            }
-                            if (frame.get("Тип").equals("Игра")) {
-                                try {
-                                    GameWindow gameWindow = new GameWindow();
-                                    gameWindow.setLocation((java.awt.Point) frame.get("Местоположение"));
-                                    gameWindow.setSize((java.awt.Dimension) frame.get("Размер"));
-                                    gameWindow.setSelected((boolean) frame.get("Выбран"));
-                                    mainAppFrame.addWindow(gameWindow, gameWindow.getSize().width, gameWindow.getSize().height); // Добавлено окно перед установкой свернутости
-                                    if ((boolean) frame.get("Свернут")) {
-                                        gameWindow.setIcon(true);
-                                    }
-                                } catch (java.beans.PropertyVetoException e) {
-                                    System.err.println("Ошибка при создании и добавлении игрового окна: " + e.getMessage());
+            try (ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(new FileInputStream(configFile)))) {
+                ArrayList<HashMap<String, Object>> restored = (ArrayList<HashMap<String, Object>>) ois.readObject();
 
-                                }
+                for (HashMap<String, Object> frame : restored) {
+                    try {
+                        JInternalFrame window = null;
+                        if ("Журнал".equals(frame.get("Тип"))) {
+                            window = mainAppFrame.createLogWindow();
+                        } else if ("Игра".equals(frame.get("Тип"))) {
+                            window = new GameWindow();
+                        }
+
+                        if (window != null) {
+                            window.setLocation((java.awt.Point) frame.get("Местоположение"));
+                            window.setSize((java.awt.Dimension) frame.get("Размер"));
+                            window.setSelected((boolean) frame.get("Выбран"));
+                            mainAppFrame.addWindow(window, window.getSize().width, window.getSize().height);
+                            if ((boolean) frame.get("Свернут")) {
+                                window.setIcon(true);
                             }
                         }
-                    } catch (ClassNotFoundException ex) {
-                        ex.printStackTrace();
-                    } finally {
-                        ois.close();
+                    } catch (java.beans.PropertyVetoException e) {
+                        System.err.println("Ошибка при восстановлении окна: " + e.getMessage());
                     }
-                } finally {
-                    is.close();
                 }
-            } catch (IOException ex) {
-                ex.printStackTrace();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
             }
         }
-
-
     }
+
 
     /**
      * Создает окно журнала.
@@ -239,26 +223,6 @@ public class MainApplicationFrame extends JFrame
     }
 
     /**
-     * Создает элемент меню для выхода из приложения.
-     */
-    private JMenuItem exit()
-    {
-        // Создание элемента меню для выхода с указанным текстом
-        JMenuItem exitMenuItem = new JMenuItem(("Выход"));
-
-        // Установка мнемоники для быстрого доступа к элементу меню
-        exitMenuItem.setMnemonic(KeyEvent.VK_Q);
-        // Установка сочетания клавиш для быстрого доступа к элементу меню
-        exitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.ALT_MASK));
-        // Установка слушателя действий для элемента меню
-        exitMenuItem.addActionListener((event) -> {
-            exitWindow();
-        });
-        return exitMenuItem;
-
-    }
-
-    /**
      * Метод createTestMenu создает и возвращает меню для раздела "Тесты" в строке меню приложения.
      * Включает в себя пункт меню для добавления сообщения в лог.
      */
@@ -290,6 +254,26 @@ public class MainApplicationFrame extends JFrame
     }
 
     /**
+     * Создает элемент меню для выхода из приложения.
+     */
+    private JMenuItem exit()
+    {
+        // Создание элемента меню для выхода с указанным текстом
+        JMenuItem exitMenuItem = new JMenuItem(("Выход"));
+
+        // Установка мнемоники для быстрого доступа к элементу меню
+        exitMenuItem.setMnemonic(KeyEvent.VK_Q);
+        // Установка сочетания клавиш для быстрого доступа к элементу меню
+        exitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.ALT_MASK));
+        // Установка слушателя действий для элемента меню
+        exitMenuItem.addActionListener((event) -> {
+            exitWindow();
+        });
+        return exitMenuItem;
+
+    }
+
+    /**
      * Метод exitWindow() отвечает за выход из текущего окна с подтверждением.
      * Устанавливает текст для кнопок подтверждения на русском языке.
      * Если пользователь подтверждает выход, окно будет закрыто.
@@ -302,17 +286,21 @@ public class MainApplicationFrame extends JFrame
         int confirmation = JOptionPane.showConfirmDialog(this, ("Вы, действительно, что хотите выйти?"), ("Подтверждение выхода"), JOptionPane.YES_NO_OPTION);
         // Закрытие окна при подтверждении выхода
         if (confirmation == JOptionPane.YES_OPTION) {
-            save();
-            this.dispose();
-            System.exit(0);
+            saveAndExit(); // Вызов метода сохранения и выхода
         }
     }
 
-
+    /**
+     * Сохраняет состояние окон на рабочем столе в файл и завершает работу приложения.
+     */
+    private void saveAndExit() {
+        save(); // Вызов метода сохранения состояния
+        this.dispose(); // Закрытие текущего окна
+        System.exit(0); // Завершение работы приложения
+    }
 
     /**
      * Сохраняет состояние окон на рабочем столе в файл.
-     * Каждое окно представляется в виде HashMap<String, Object>, содержащего его свойства.
      */
     private void save() {
         ArrayList<HashMap<String, Object>> frames = new ArrayList<>();
@@ -323,15 +311,29 @@ public class MainApplicationFrame extends JFrame
         String userHomeDir = System.getProperty("user.home");
         File configFile = new File(userHomeDir, "saves.out");
 
+        FileOutputStream fos = null;
+        ObjectOutputStream oos = null;
+
         try {
-            FileOutputStream fos = new FileOutputStream(configFile);
-            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            fos = new FileOutputStream(configFile);
+            oos = new ObjectOutputStream(fos);
             oos.writeObject(frames);
-            oos.flush();
-            oos.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                if (oos != null) {
+                    oos.close();
+                }
+                if (fos != null) {
+                    fos.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
+
+
 
 }
