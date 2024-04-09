@@ -2,6 +2,7 @@ package gui;
 
 import javax.swing.*;
 import java.awt.*;
+import model.*;
 import state.*;
 import java.beans.PropertyVetoException;
 import java.util.Map;
@@ -11,9 +12,9 @@ import java.util.Map;
 public class GameWindow extends JInternalFrame implements Save {
     private final FrameState stateFormer = new FrameState(this);
 
-    public GameWindow() {
+    public GameWindow(RobotCoordinate robotCoordinate) {
         super("Игровое поле", true, true, true, true);
-        GameVisualizer m_visualizer = new GameVisualizer();
+        GameVisualizer m_visualizer = new GameVisualizer(robotCoordinate);
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(m_visualizer, BorderLayout.CENTER);
         getContentPane().add(panel);

@@ -1,23 +1,26 @@
 package gui;
 
-import java.awt.*;
-import javax.swing.*;
+import log.*;
+import model.RobotCoordinate;
 import state.*;
-import java.util.Map;
-import log.LogChangeListener;
-import log.LogEntry;
-import log.LogWindowSource;
+import javax.swing.*;
+import java.awt.*;
 import java.beans.PropertyVetoException;
+import java.util.*;
 
-public class LogWindow extends JInternalFrame implements LogChangeListener, Save
+public class LogWindow extends JInternalFrame implements LogChangeListener, Save, Observer
 {
     private final FrameState stateFormer = new FrameState(this);
-    private LogWindowSource m_logSource;
-    private TextArea m_logContent;
+    private final LogWindowSource m_logSource;
+    private final TextArea m_logContent;
 
-    public LogWindow(LogWindowSource logSource)
+    private final RobotCoordinate robotCoordinate;
+
+    public LogWindow(LogWindowSource logSource, RobotCoordinate robotCoordinate)
     {
         super("Протокол работы", true, true, true, true);
+        this.robotCoordinate = robotCoordinate;
+        this.robotCoordinate.addObserver(this);
         m_logSource = logSource;
         m_logSource.registerListener(this);
         m_logContent = new TextArea("");
@@ -55,5 +58,11 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Save
     @Override
     public void restoreState(Map<String, String> data) throws PropertyVetoException {
         stateFormer.restoreState(data);
+    }
+
+    @Override
+    public void update(Observable o, Object arg) {
+        Logger.debug("x: " + robotCoordinate.getM_targetPositionX()
+                + " y: " + robotCoordinate.getM_targetPositionY());
     }
 }

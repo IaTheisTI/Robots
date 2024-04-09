@@ -5,6 +5,7 @@ import java.awt.event.*;
 import java.beans.PropertyVetoException;
 import java.util.HashMap;
 import java.util.Map;
+import model.RobotCoordinate;
 
 import javax.swing.*;
 import state.*;
@@ -51,11 +52,13 @@ public class MainApplicationFrame extends JFrame {
 
         setContentPane(desktopPane);
 
+        RobotCoordinate robotCoordinate = new RobotCoordinate();
+
         // Создание окон
-        LogWindow logWindow = createLogWindow();
+        LogWindow logWindow = createLogWindow(robotCoordinate);
         addWindow(logWindow);
 
-        GameWindow gameWindow = createGameWindow();
+        GameWindow gameWindow = createGameWindow(robotCoordinate);
         addWindow(gameWindow);
 
         // Установка меню и операции закрытия
@@ -79,8 +82,8 @@ public class MainApplicationFrame extends JFrame {
     /**
      * Создает окно журнала.
      */
-    protected LogWindow createLogWindow() throws PropertyVetoException {
-        LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
+    protected LogWindow createLogWindow(RobotCoordinate robotCoordinate) throws PropertyVetoException {
+        LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource(), robotCoordinate);
         Map<String, String> state = stateFileManager.readStateFromFile();
         if (state != null) {
             logWindow.restoreState(StateTransformer.getSubMap(state, "log"));
@@ -93,9 +96,8 @@ public class MainApplicationFrame extends JFrame {
         Logger.debug(PROTOCOL_WORKING_DEBUG_MESSAGE);
         return logWindow;
     }
-
-    protected GameWindow createGameWindow() throws PropertyVetoException {
-        GameWindow gameWindow = new GameWindow();
+    protected GameWindow createGameWindow(RobotCoordinate robotCoordinate) throws PropertyVetoException {
+        GameWindow gameWindow = new GameWindow(robotCoordinate);
         Map<String, String> state = stateFileManager.readStateFromFile();
         if (state != null) {
             gameWindow.restoreState(StateTransformer.getSubMap(state,"game"));
