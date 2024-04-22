@@ -8,7 +8,7 @@ import java.util.TimerTask;
 /**
  * Класс, отвечающий за перемещение робота
  */
-public class RobotCoordinate extends Observable {
+public class RobotModel extends Observable {
     private volatile double m_robotPositionX = 150;
     private volatile double m_robotPositionY = 100;
     private volatile double m_robotDirection = 0;
@@ -20,7 +20,7 @@ public class RobotCoordinate extends Observable {
      * Конструктор класса RobotCoordinate.
      * Инициализирует для перемещения робота и генерации событий.
      */
-    public RobotCoordinate(){
+    public RobotModel(){
         Timer m_timer = new Timer("events generator", true);
         m_timer.schedule(new TimerTask()
         {
@@ -28,6 +28,7 @@ public class RobotCoordinate extends Observable {
             public void run()
             {
                 moveRobot();
+                setChanged();
                 notifyObservers();
             }
         }, 0, 10);
@@ -81,7 +82,7 @@ public class RobotCoordinate extends Observable {
      * метод перемещения робота к цели
      */
     public void moveRobot(){
-        double distance = Robot.distance(m_targetPositionX, m_targetPositionY,
+        double distance = RobotMath.distance(m_targetPositionX, m_targetPositionY,
                 m_robotPositionX, m_robotPositionY);
         if (distance < 0.5)
         {
@@ -103,8 +104,7 @@ public class RobotCoordinate extends Observable {
         }
         m_robotPositionX = newX;
         m_robotPositionY = newY;
-        m_robotDirection = Robot.angleTo(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
-        setChanged();
+        m_robotDirection = RobotMath.angleTo(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
     }
 
 }

@@ -17,6 +17,7 @@ public class FrameState {
 
     /**
      * Сохранение состояния окна, хранящегося в поле frame
+     * @return - Map: ключ - название параметра состояния, значение - значение параметра состояния
      */
     public Map<String, String> saveState() {
         Map<String, String> result = new HashMap<>();
@@ -35,6 +36,8 @@ public class FrameState {
 
     /**
      * восстановление состояния окна, хранящегося в поле frame
+     * @param data - Map: ключ - название параметра состояния, значение - значение параметра состояния
+     * @throws PropertyVetoException - возникает, когда значение параметра состояния некорректное
      */
     public void restoreState(Map<String, String> data) throws PropertyVetoException {
         frame.setSize(Integer.parseInt(data.get("width")), Integer.parseInt(data.get("height")));

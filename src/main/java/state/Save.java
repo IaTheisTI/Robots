@@ -9,11 +9,14 @@ import java.util.Map;
 public interface Save {
     /**
      * сохранение состояния окна в Map
+     * @return - Map: ключ - название параметра состояния, значение - значение параметра состояния
      */
     Map<String, String> saveState();
 
     /**
      * восстановление состояния окна из Map
+     * @param data - Map: ключ - название параметра состояния, значение - значение параметра состояния
+     * @throws PropertyVetoException - возникает, когда значение параметра состояния некорректное
      */
     void restoreState(Map<String, String> data) throws PropertyVetoException;
 }
