@@ -12,10 +12,11 @@ import java.util.Map;
 public class State {
 
     private final String HOME_DIR = System.getProperty("user.home");
-    private final String FILE_NAME = HOME_DIR + "\\save.txt";
+    private final String FILE_NAME = HOME_DIR + "\\windowConfig.txt";
 
     /**
      * чтение состояний окон из файла
+     * @return Map, ключ - название параметра состояния окна, значение - значение параметра
      */
     public Map<String, String> readStateFromFile(){
         Map<String, String> result = new HashMap<>();

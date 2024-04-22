@@ -1,12 +1,18 @@
 package gui;
 
-import log.*;
-import model.RobotCoordinate;
-import state.*;
+import log.LogChangeListener;
+import log.LogEntry;
+import log.LogWindowSource;
+import log.Logger;
+import state.FrameState;
+import state.Save;
+
 import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyVetoException;
-import java.util.*;
+import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 
 public class LogWindow extends JInternalFrame implements LogChangeListener, Save, Observer
 {
@@ -14,13 +20,9 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Save
     private final LogWindowSource m_logSource;
     private final TextArea m_logContent;
 
-    private final RobotCoordinate robotCoordinate;
-
-    public LogWindow(LogWindowSource logSource, RobotCoordinate robotCoordinate)
+    public LogWindow(LogWindowSource logSource)
     {
         super("Протокол работы", true, true, true, true);
-        this.robotCoordinate = robotCoordinate;
-        this.robotCoordinate.addObserver(this);
         m_logSource = logSource;
         m_logSource.registerListener(this);
         m_logContent = new TextArea("");
@@ -62,7 +64,6 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Save
 
     @Override
     public void update(Observable o, Object arg) {
-        Logger.debug("x: " + robotCoordinate.getM_targetPositionX()
-                + " y: " + robotCoordinate.getM_targetPositionY());
+
     }
 }

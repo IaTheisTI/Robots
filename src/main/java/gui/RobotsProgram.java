@@ -1,9 +1,13 @@
 package gui;
 
-import javax.swing.*;
-import java.awt.*;
 import log.Logger;
+import model.RobotModel;
+
+import java.awt.Frame;
 import java.beans.PropertyVetoException;
+
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 public class RobotsProgram {
   public static void main(String[] args) {

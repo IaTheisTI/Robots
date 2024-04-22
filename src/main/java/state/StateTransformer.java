@@ -8,6 +8,9 @@ import java.util.*;
 public class StateTransformer {
     /**
      * код формирования подсловаря по общему словарю
+     * @param prefix - префикс ключа
+     * @return - подсловарь отдельной компоненты без префиксов
+     * @throws IllegalArgumentException - возникает, когда передан несуществующий префикс
      */
     public static Map<String, String> getSubMap(Map<String, String> generalMap, String prefix){
         Map<String, String> subMap = new HashMap<>();
@@ -25,6 +28,8 @@ public class StateTransformer {
 
     /**
      * код добавления префикса к подсловарю
+     * @param prefix - префикс
+     * @return - подсловарь с префиксом
      */
     private static Map<String, String> addPrefixToSubMap(Map<String, String> subMap, String prefix){
         Map<String, String> subMapWithPrefix = new HashMap<>();
@@ -34,6 +39,8 @@ public class StateTransformer {
 
     /**
      * код добавления подсловаря в общий словарь по префиксу
+     * @param prefix - префикс, добвляемый к подсловарю
+     * @param subMap - подсловарь
      */
     public static void addSubMapToGeneralMapByPrefix(String prefix, Map<String, String> subMap, Map<String, String> generalMap){
         subMap = addPrefixToSubMap(subMap, prefix);
