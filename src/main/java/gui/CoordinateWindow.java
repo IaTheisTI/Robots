@@ -20,9 +20,9 @@ public class CoordinateWindow extends JInternalFrame implements Save, Observer {
 
         coordinatesArea = new JTextArea();
         coordinatesArea.setFont(new Font("Arial", Font.PLAIN, 16));
-        coordinatesArea.setEditable(false);
+        coordinatesArea.setEditable(false); // Чтобы текст нельзя было изменить
 
-        JScrollPane scrollPane = new JScrollPane(coordinatesArea);
+        JScrollPane scrollPane = new JScrollPane(coordinatesArea); // Добавляем прокрутку, если текст не помещается
         getContentPane().add(scrollPane);
 
         setSize(300, 100);

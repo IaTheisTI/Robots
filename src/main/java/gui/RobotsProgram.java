@@ -1,6 +1,8 @@
 package gui;
 
 import log.Logger;
+import model.RobotModel;
+
 import java.awt.Frame;
 import java.beans.PropertyVetoException;
 
