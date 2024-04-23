@@ -90,7 +90,7 @@ public class MainApplicationFrame extends JFrame {
     }
 
     protected LogWindow createLogWindow(RobotModel robotModel) throws PropertyVetoException {
-        LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource(), robotModel);
+        LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
         Map<String, String> state = stateFileManager.readStateFromFile();
         if (state != null) {
             logWindow.restoreState(StateTransformer.getSubMap(state, "log"));
