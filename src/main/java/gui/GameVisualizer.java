@@ -1,6 +1,5 @@
 package gui;
 
-import model.RobotMath;
 import model.RobotModel;
 
 import java.awt.Color;
