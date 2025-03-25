@@ -43,7 +43,6 @@ public class MainApplicationFrame extends JFrame
         setJMenuBar(generateMenuBar());
 
         // Установка операции по закрытию окна приложения
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
         // Добавление обработки для события закрытия окна
@@ -224,11 +223,11 @@ public class MainApplicationFrame extends JFrame
         UIManager.put("OptionPane.noButtonText", "Нет");
 
         // Отображение диалогового окна с подтверждением выхода
-        int confirmation = JOptionPane.showConfirmDialog(this, "Вы, действительно, хотите выйти?", "Подтверждение выхода", JOptionPane.YES_NO_OPTION);
+        int confirmation = JOptionPane.showConfirmDialog(this, "Вы, действительно, хотите выйти?",
+                "Подтверждение выхода", JOptionPane.YES_NO_OPTION);
 
         // Закрытие окна при подтверждении выхода
         if (confirmation == JOptionPane.YES_OPTION) {
-            this.dispose();
             System.exit(0);
         }
     }
