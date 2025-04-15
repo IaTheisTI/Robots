@@ -8,6 +8,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyVetoException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.*;
@@ -21,6 +22,8 @@ public class MainApplicationFrame extends JFrame
     private final JDesktopPane desktopPane = new JDesktopPane();
     private final State stateFileManager = new State();
 
+    private LogWindow logWindow;
+    private GameWindow gameWindow;
 
     public MainApplicationFrame() throws PropertyVetoException{
         int inset = 50;
@@ -33,11 +36,11 @@ public class MainApplicationFrame extends JFrame
         setContentPane(desktopPane);
 
         // Создание и добавление окна для логирования
-        LogWindow logWindow = createLogWindow();
+        logWindow = createLogWindow();
         addWindow(logWindow);
 
         // Создание и добавление окна для игры
-        GameWindow gameWindow = createGameWindow();
+        gameWindow = createGameWindow();
         addWindow(gameWindow);
 
         setJMenuBar(generateMenuBar());
@@ -115,7 +118,7 @@ public class MainApplicationFrame extends JFrame
     }
 
 
-    private JMenu createMenuBar() {
+    private JMenu createMenuBar(){
         JMenu menu = new JMenu("Меню");
         menu.setMnemonic(KeyEvent.VK_D);
 
@@ -144,6 +147,10 @@ public class MainApplicationFrame extends JFrame
         exitMenuItem.setMnemonic(KeyEvent.VK_Q);
         exitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.ALT_MASK));
         exitMenuItem.addActionListener((event) -> {
+            Map<String, String> state = new HashMap<>();
+            StateTransformer.addSubMapToGeneralMapByPrefix("log", logWindow.saveState(), state);
+            StateTransformer.addSubMapToGeneralMapByPrefix("game", gameWindow.saveState(), state);
+            stateFileManager.writeStateInFile(state);
             exitWindow();
         });
         menu.add(exitMenuItem);
