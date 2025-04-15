@@ -6,22 +6,23 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyVetoException;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.*;
 
 import log.Logger;
+import state.State;
+import state.StateTransformer;
 
 public class MainApplicationFrame extends JFrame
 {
     private final JDesktopPane desktopPane = new JDesktopPane();
+    private final State stateFileManager = new State();
 
-    /**
-     * Конструктор класса MainApplicationFrame создает главное окно приложения.
-     * Устанавливает размеры и расположение окна, добавляет рабочую область,
-     * создает и добавляет окно для логирования и окно для игры,
-     * устанавливает строку меню и операцию по закрытию окна приложения.
-     */
-    public MainApplicationFrame() {
+
+    public MainApplicationFrame() throws PropertyVetoException{
         int inset = 50;
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setBounds(inset, inset,
@@ -36,62 +37,64 @@ public class MainApplicationFrame extends JFrame
         addWindow(logWindow);
 
         // Создание и добавление окна для игры
-        GameWindow gameWindow = new GameWindow();
-        gameWindow.setSize(400, 400);
+        GameWindow gameWindow = createGameWindow();
         addWindow(gameWindow);
 
         setJMenuBar(generateMenuBar());
 
         // Установка операции по закрытию окна приложения
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
         // Добавление обработки для события закрытия окна
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
+                Map<String, String> state = new HashMap<>();
+                StateTransformer.addSubMapToGeneralMapByPrefix("log", logWindow.saveState(), state);
+                StateTransformer.addSubMapToGeneralMapByPrefix("game", gameWindow.saveState(), state);
+                stateFileManager.writeStateInFile(state);
                 exitWindow();
             }
         });
+
     }
 
-    /**
-     * Метод createLogWindow создает и настраивает окно логирования.
-     * Окно получает логгер по умолчанию и устанавливает его расположение, размер,
-     * минимальный размер окна, и затем упаковывает содержимое.
-     * Также, выводится отладочное сообщение в лог о успешной инициализации логгера.
-     */
-    protected LogWindow createLogWindow()
-    {
+
+    protected LogWindow createLogWindow() throws PropertyVetoException {
         LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
-        logWindow.setLocation(10,10);
-        logWindow.setSize(300, 800);
-
-        // Установка минимального размера окна
-        setMinimumSize(logWindow.getSize());
-        logWindow.pack();
-
+        Map<String, String> state = stateFileManager.readStateFromFile();
+        if (state != null) {
+            logWindow.restoreState(StateTransformer.getSubMap(state, "log"));
+        } else {
+            logWindow.setLocation(10,10);
+            logWindow.setSize(300, 800);
+            // Установка минимального размера окна
+            setMinimumSize(logWindow.getSize());
+            logWindow.pack();
+        }
         // Вывод отладочного сообщения о успешной инициализации логгера
         Logger.debug("Протокол работает");
         return logWindow;
     }
 
-    /**
-     * Метод addWindow добавляет внутреннее окно типа JInternalFrame к рабочей области desktopPane.
-     * Устанавливает видимость добавленного окна.
-     */
-    protected void addWindow(JInternalFrame frame)
-    {
-        // Добавление внутреннего окна к рабочей области
-        desktopPane.add(frame);
 
-        // Установка видимости добавленного окна
+    protected GameWindow createGameWindow() throws PropertyVetoException {
+        GameWindow gameWindow = new GameWindow();
+        Map<String, String> state = stateFileManager.readStateFromFile();
+        if (state != null) {
+            gameWindow.restoreState(StateTransformer.getSubMap(state, "game"));
+        } else {
+            gameWindow.setSize(400, 400);
+        }
+        return gameWindow;
+    }
+
+
+    protected void addWindow(JInternalFrame frame) {
+        desktopPane.add(frame);
         frame.setVisible(true);
     }
 
-    /**
-     * Метод generateMenuBar создает и возвращает строку меню (JMenuBar) для главного окна приложения.
-     * Включает в себя различные подменю, такие как меню файла, меню внешнего вида и тестовые команды.
-     */
+
     private JMenuBar generateMenuBar()
     {
         JMenuBar menuBar = new JMenuBar();
@@ -111,11 +114,7 @@ public class MainApplicationFrame extends JFrame
         return menuBar;
     }
 
-    /**
-     * Метод createMenuBar создает и возвращает меню для раздела "Меню" в строке меню приложения.
-     * Включает в себя пункты меню для создания нового игрового поля, открытия окна логов
-     * и выхода из приложения.
-     */
+
     private JMenu createMenuBar() {
         JMenu menu = new JMenu("Меню");
         menu.setMnemonic(KeyEvent.VK_D);
@@ -126,7 +125,6 @@ public class MainApplicationFrame extends JFrame
         menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.ALT_MASK));
         menuItem.addActionListener((event) -> {
             GameWindow newGameWindow = new GameWindow();
-            newGameWindow.setSize(400, 400);
             addWindow(newGameWindow);
         });
         menu.add(menuItem);
@@ -150,8 +148,12 @@ public class MainApplicationFrame extends JFrame
         });
         menu.add(exitMenuItem);
 
+
+
         return menu;
     }
+
+
 
     /**
      * Метод createLookAndFeelMenu создает и возвращает меню для раздела "Режим отображения" в строке меню приложения.
@@ -180,10 +182,7 @@ public class MainApplicationFrame extends JFrame
         return lookAndFeelMenu;
     }
 
-    /**
-     * Метод createTestMenu создает и возвращает меню для раздела "Тесты" в строке меню приложения.
-     * Включает в себя пункт меню для добавления сообщения в лог.
-     */
+
     private JMenu createTestMenu() {
         JMenu testMenu = new JMenu("Тесты");
         testMenu.setMnemonic(KeyEvent.VK_T);
@@ -199,6 +198,7 @@ public class MainApplicationFrame extends JFrame
         return testMenu;
     }
 
+
     /**
      * Метод setLookAndFeel устанавливает внешний вид приложения на основе переданного класса внешнего вида.
      * Обновляет компоненты пользовательского интерфейса для применения изменений.
@@ -213,6 +213,7 @@ public class MainApplicationFrame extends JFrame
         }
     }
 
+
     /**
      * Метод exitWindow() отвечает за выход из текущего окна с подтверждением.
      * Устанавливает текст для кнопок подтверждения на русском языке.
@@ -224,12 +225,14 @@ public class MainApplicationFrame extends JFrame
         UIManager.put("OptionPane.noButtonText", "Нет");
 
         // Отображение диалогового окна с подтверждением выхода
-        int confirmation = JOptionPane.showConfirmDialog(this, "Вы, действительно, хотите выйти?", "Подтверждение выхода", JOptionPane.YES_NO_OPTION);
+        int confirmation = JOptionPane.showConfirmDialog(this, "Вы, действительно, хотите выйти?",
+                "Подтверждение выхода", JOptionPane.YES_NO_OPTION);
 
         // Закрытие окна при подтверждении выхода
         if (confirmation == JOptionPane.YES_OPTION) {
-            this.dispose();
             System.exit(0);
         }
     }
+
+
 }
