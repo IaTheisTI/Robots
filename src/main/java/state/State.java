@@ -12,7 +12,7 @@ import java.util.Map;
 public class State {
 
     private final String HOME_DIR = System.getProperty("user.home");
-    private final String FILE_NAME = HOME_DIR + "\\save.txt";
+    private final String FILE_NAME = HOME_DIR + "/bleskin/save.txt";
 
     /**
      * чтение состояний окон из файла
