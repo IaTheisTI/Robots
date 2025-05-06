@@ -1,9 +1,9 @@
 package gui;
 
-import javax.swing.*;
-import java.awt.*;
-import log.Logger;
-import java.beans.PropertyVetoException;
+import java.awt.Frame;
+
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 public class RobotsProgram
 {
@@ -14,17 +14,10 @@ public class RobotsProgram
 //        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 //        UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
     } catch (Exception e) {
-      Logger.error(e.getMessage());
+      e.printStackTrace();
     }
     SwingUtilities.invokeLater(() -> {
-      MainApplicationFrame frame = null;
-        try {
-            frame = new MainApplicationFrame();
-        } catch (PropertyVetoException e) {
-            throw new RuntimeException(e);
-        }
-        frame.pack();
+      MainApplicationFrame frame = new MainApplicationFrame();
       frame.setVisible(true);
-      frame.setExtendedState(Frame.MAXIMIZED_BOTH);
     });
   }}

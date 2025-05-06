@@ -1,25 +1,23 @@
 package gui;
 
-import java.awt.*;
-import javax.swing.*;
-import state.*;
-import java.util.Map;
 import log.LogChangeListener;
 import log.LogEntry;
 import log.LogWindowSource;
-import java.beans.PropertyVetoException;
+import state.Save;
 
-public class LogWindow extends JInternalFrame implements LogChangeListener, Save
-{
-    private final FrameState stateFormer = new FrameState(this);
-    private LogWindowSource m_logSource;
-    private TextArea m_logContent;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.EventQueue;
 
-    public LogWindow(LogWindowSource logSource)
-    {
-        super("Протокол работы", true, true, true, true);
+public class LogWindow extends AbstractWindow implements LogChangeListener, Save {
+    private final LogWindowSource m_logSource;
+    private final TextArea m_logContent;
+
+    public LogWindow(LogWindowSource logSource) {
+        super("Протокол работы", 300, 800, 10, 10);
         m_logSource = logSource;
         m_logSource.registerListener(this);
+
         m_logContent = new TextArea("");
         m_logContent.setSize(200, 500);
 
@@ -30,11 +28,9 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Save
         updateLogContent();
     }
 
-    private void updateLogContent()
-    {
+    private void updateLogContent() {
         StringBuilder content = new StringBuilder();
-        for (LogEntry entry : m_logSource.all())
-        {
+        for (LogEntry entry : m_logSource.all()) {
             content.append(entry.getMessage()).append("\n");
         }
         m_logContent.setText(content.toString());
@@ -42,18 +38,12 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Save
     }
 
     @Override
-    public void onLogChanged()
-    {
+    public void onLogChanged() {
         EventQueue.invokeLater(this::updateLogContent);
     }
 
     @Override
-    public Map<String, String> saveState(){
-        return stateFormer.saveState();
-    }
-
-    @Override
-    public void restoreState(Map<String, String> data) throws PropertyVetoException {
-        stateFormer.restoreState(data);
+    public String getNameOfWindow() {
+        return "LogWindow";
     }
 }

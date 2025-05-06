@@ -1,19 +1,27 @@
 package state;
 
-import java.beans.PropertyVetoException;
 import java.util.Map;
 
 /**
- * Интерфейс сохранения и восстановления состояния окна графического приложения
+ * Сохраняет и восстанавливает состояние окна
  */
 public interface Save {
-    /**
-     * сохранение состояния окна в Map
-     */
-    Map<String, String> saveState();
 
     /**
-     * восстановление состояния окна из Map
+     * Сохраняет состояние окна
+     * @return Возвращает мапу, в которой в ключе лежит название
+     * параметра, а в значение - состояние
      */
-    void restoreState(Map<String, String> data) throws PropertyVetoException;
+    Map<String, Integer> saveWindowState();
+
+    /**
+     * Загружает состояние окна
+     */
+    void loadWindowState(Map<String, Integer> params);
+
+    /**
+     *
+     * @return Возвращает имя окна
+     */
+    String getNameOfWindow();
 }
