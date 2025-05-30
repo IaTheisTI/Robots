@@ -7,44 +7,66 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Locale;
 
 /**
- *Окно с текущей позицией робота(координаты)
- * Реагирует на изменения позиции робота через механизм PropertyChangeListener
+ * Окно отображения текущих координат робота
+ * Реализует автоматическое обновление при изменении позиции и смене языка
  */
 public class CoordinateWindow extends AbstractWindow implements Save, PropertyChangeListener {
     private final JTextArea textArea;
+    private final GameModel model;
+    private double currentX;
+    private double currentY;
 
     public CoordinateWindow(GameModel model) {
-        super("Координаты", 300, 200, 100, 100);
+        super(LocalizationManager.getString("coordinates.title"), 300, 200, 100, 100);
+        this.model = model;
+
+        // Настройка текстовой области
         textArea = new JTextArea();
         textArea.setEditable(false);
+        textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         add(new JScrollPane(textArea), BorderLayout.CENTER);
-        pack();
+
+        // Инициализация
         model.addPropertyChangeListener(this);
-        updateText(model.getX(), model.getY());
+        updateCoordinates(model.getX(), model.getY());
+
+        // Регистрация слушателя изменения локализации
+        LocalizationManager.addLocaleChangeListener(e -> updateText());
+
+        pack();
     }
 
     /**
-     * Показывает координаты
-     * @param x
-     * @param y
+     * Обновляет координаты и текст
      */
-    private void updateText(double x, double y) {
-        textArea.setText(String.format("Координаты робота:\nX: %.2f\nY: %.2f", x, y));
+    private void updateCoordinates(double x, double y) {
+        this.currentX = x;
+        this.currentY = y;
+        updateText();
     }
 
     /**
-     *Обрабатывает событие изменения координат робота,
-     *при получении события с именем "position" обновляет отображение координат
-     * @param evt Объект PropertyChangeEvent, описывающий источник события
-     *и свойство, которое изменилось.
+     * Обновляет текст с учетом текущей локализации
      */
+    private void updateText() {
+        String formattedText = String.format(Locale.US, "%s:\n%s: %.2f\n%s: %.2f",
+                LocalizationManager.getString("coordinates.robot"),
+                LocalizationManager.getString("coordinates.x"),
+                currentX,
+                LocalizationManager.getString("coordinates.y"),
+                currentY);
+
+        textArea.setText(formattedText);
+    }
+
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if ("position".equals(evt.getPropertyName())) {
             double[] newPos = (double[]) evt.getNewValue();
-            updateText(newPos[0], newPos[1]);
+            updateCoordinates(newPos[0], newPos[1]);
         }
     }
 
@@ -52,4 +74,6 @@ public class CoordinateWindow extends AbstractWindow implements Save, PropertyCh
     public String getNameOfWindow() {
         return "CoordinateWindow";
     }
+
+
 }

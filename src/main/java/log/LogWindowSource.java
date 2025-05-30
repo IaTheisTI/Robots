@@ -5,22 +5,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * Потокобезопасный источник сообщений лога с фиксированным размером буфера.
- * Реализует кольцевой буфер для хранения записей лога, автоматически вытесняя старые записи при переполнении.
- * Поддерживает уведомление зарегистрированных слушателей о новых записях.
- *
- * <p>Гарантирует:
- * <ul>
- *   <li>Потокобезопасность при добавлении и чтении записей</li>
- *   <li>Фиксированный размер хранимых данных (старые записи автоматически удаляются)</li>
- *   <li>Эффективное добавление и доступ к данным (O(1) для добавления, O(k) для чтения диапазона)</li>
- *   <li>Безопасную работу со слушателями в многопоточной среде</li>
- * </ul>
- *
- * @see LogEntry
- * @see LogChangeListener
- */
+
 public class LogWindowSource {
     private final int m_iQueueLength;
     private final LogEntry[] m_messages;
@@ -31,7 +16,6 @@ public class LogWindowSource {
 
     /**
      * Создает новый источник лога с указанным максимальным размером буфера.
-     *
      * @param iQueueLength максимальное количество хранимых записей (должно быть положительным)
      */
     public LogWindowSource(int iQueueLength) {
@@ -41,23 +25,14 @@ public class LogWindowSource {
         m_size = 0;
     }
 
-    /**
-     * Регистрирует слушателя изменений лога.
-     * Слушатель будет уведомляться при добавлении новых записей.
-     *
-     * @param listener слушатель для регистрации (игнорируется, если null)
-     */
+
     public void registerListener(LogChangeListener listener) {
         if (listener != null) {
             m_listeners.addIfAbsent(listener);
         }
     }
 
-    /**
-     * Отменяет регистрацию слушателя изменений лога.
-     *
-     * @param listener слушатель для удаления
-     */
+
     public void unregisterListener(LogChangeListener listener) {
         m_listeners.remove(listener);
     }
@@ -66,7 +41,6 @@ public class LogWindowSource {
      * Добавляет новую запись в лог.
      * Если буфер заполнен, самая старая запись вытесняется.
      * После добавления уведомляет всех зарегистрированных слушателей.
-     *
      * @param logLevel уровень важности записи
      * @param strMessage текст сообщения
      */
@@ -90,9 +64,7 @@ public class LogWindowSource {
         notifyListeners();
     }
 
-    /**
-     * Уведомляет всех слушателей об изменении лога.
-     */
+
     private void notifyListeners() {
         for (LogChangeListener listener : m_listeners) {
             listener.onLogChanged();
@@ -100,10 +72,8 @@ public class LogWindowSource {
     }
 
 
-
     /**
      * Возвращает текущее количество записей в логе.
-     *
      * @return число записей (0 <= size <= m_iQueueLength)
      */
     public int size() {
@@ -117,7 +87,6 @@ public class LogWindowSource {
 
     /**
      * Возвращает диапазон записей из лога.
-     *
      * @param startFrom начальный индекс (0-based)
      * @param count максимальное количество записей для возврата
      * @return неизменяемый список записей (пустой список, если startFrom некорректен)
@@ -147,7 +116,6 @@ public class LogWindowSource {
     /**
      * Возвращает все записи лога.
      * Эквивалентно вызову range(0, size()).
-     *
      * @return неизменяемый список всех записей
      */
     public Iterable<LogEntry> all() {

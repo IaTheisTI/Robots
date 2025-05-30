@@ -7,49 +7,45 @@ import state.Save;
 
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /**
- * Окно игрового поля, отображающее движение робота и его цель.
- * Наследует базовое поведение от {@link AbstractWindow} и реализует интерфейс {@link Save}
- * для поддержки сохранения/восстановления состояния окна.
- * Создает и связывает между собой модель, визуализатор и контроллер.
+ * Окно игрового поля с поддержкой локализации
  */
-public class GameWindow extends AbstractWindow implements Save {
-    /** Компонент, отвечающий за визуализацию игрового поля и робота */
-    private final GameVisualizer m_visualizer;
-
-    /** Модель, содержащая логику движения робота и хранения его состояния */
+public class GameWindow extends AbstractWindow implements Save, PropertyChangeListener {
+    private final GameVisualizer visualizer;
     public final GameModel model;
 
-    /**
-     * Конструктор окна. Инициализирует модель, визуализатор и контроллер.
-     * Настраивает размещение компонентов внутри окна.
-     */
     public GameWindow() {
-        super("Игровое поле", 400, 400, 50, 50);
-        model = new GameModel();
-        m_visualizer = new GameVisualizer(model);
-        new GameController(model, m_visualizer);
+        super(LocalizationManager.getString("game.title"), 400, 400, 50, 50);
+        this.model = new GameModel();
+        this.visualizer = new GameVisualizer(model);
+        new GameController(model, visualizer);
 
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(m_visualizer, BorderLayout.CENTER);
+        panel.add(visualizer, BorderLayout.CENTER);
         getContentPane().add(panel);
-        pack(); // подгоняет размеры окна под содержимое
+        pack();
+
+        // Регистрация слушателя изменений локализации
+        LocalizationManager.addLocaleChangeListener(this);
     }
 
-    /**
-     * Возвращает уникальное имя окна, используется при сохранении состояния.
-     * @return строковое имя окна
-     */
     @Override
     public String getNameOfWindow() {
         return "GameWindow";
     }
 
-    /**
-     * Обновляет визуальное отображение игрового поля.
-     */
     public void updateGame() {
-        m_visualizer.repaint();
+        visualizer.repaint();
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if ("locale".equals(evt.getPropertyName())) {
+            setTitle(LocalizationManager.getString("game.title"));
+            updateGame();
+        }
     }
 }
