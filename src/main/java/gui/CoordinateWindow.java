@@ -14,6 +14,7 @@ import java.util.Locale;
  * Окно отображения текущих координат робота
  * Реализует автоматическое обновление при изменении позиции и смене языка
  */
+
 public class CoordinateWindow extends AbstractWindow implements Save, PropertyChangeListener {
     private final JTextArea textArea;
     private final GameModel model;
