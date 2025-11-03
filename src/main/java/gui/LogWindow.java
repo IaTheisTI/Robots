@@ -1,8 +1,10 @@
 package gui;
 
+import localization.LocalizationManager;
 import log.LogChangeListener;
 import log.LogEntry;
 import log.LogWindowSource;
+import log.Logger;
 import state.Save;
 
 import javax.swing.*;
@@ -20,9 +22,10 @@ public class LogWindow extends AbstractWindow implements LogChangeListener, Save
     private final JTextArea logContent;
 
     public LogWindow(LogWindowSource logSource) {
-        super(LocalizationManager.getString("log.title"), 300, 800, 10, 10);
-        this.logSource = logSource;
-        this.logSource.registerListener(this);
+        super(LocalizationManager.getInstance().getString("log.window.title"), 300, 800, 10, 10);
+        m_logSource = logSource;
+        m_logSource.registerListener(this);
+
 
         // Настройка текстовой области
         logContent = new JTextArea();
@@ -39,6 +42,7 @@ public class LogWindow extends AbstractWindow implements LogChangeListener, Save
         LocalizationManager.addLocaleChangeListener(this);
 
         updateLogContent();
+        Logger.debug(LocalizationManager.getInstance().getString("log.working"));
     }
 
     private void updateLogContent() {

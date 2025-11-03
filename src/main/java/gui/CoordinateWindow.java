@@ -1,6 +1,7 @@
 package gui;
 
 import game.GameModel;
+import localization.LocalizationManager;
 import state.Save;
 
 import javax.swing.*;
@@ -42,10 +43,10 @@ public class CoordinateWindow extends AbstractWindow implements Save, PropertyCh
     /**
      * Обновляет координаты и текст
      */
-    private void updateCoordinates(double x, double y) {
-        this.currentX = x;
-        this.currentY = y;
-        updateText();
+    private void updateText(double x, double y) {
+        String text = LocalizationManager.getInstance().getFormattedString(
+                "coordinates.text", x, y);
+        textArea.setText(text);
     }
 
     /**

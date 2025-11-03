@@ -3,15 +3,24 @@ package gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
+
 import javax.swing.*;
 import log.Logger;
+import localization.LocalizationManager;
 import state.Save;
 import state.SaveState;
 
 public class MainApplicationFrame extends JFrame implements Save {
     private final JDesktopPane desktopPane = new JDesktopPane();
     private final SaveState saveState = new SaveState(new HashMap<>(), new HashSet<>());
+
+    /** Менеджер локализации */
+    private final LocalizationManager localization = LocalizationManager.getInstance();
+
     private LogWindow logWindow;
     private GameWindow gameWindow;
     private CoordinateWindow coordinateWindow;
@@ -36,24 +45,12 @@ public class MainApplicationFrame extends JFrame implements Save {
             Logger.error("Ошибка загрузки состояния: " + e.getMessage());
         }
 
-        // Инициализация окон
-        initWindows();
+        // Загрузка сохраненной локали
+        Locale savedLocale = saveState.loadLocale();
+        localization.setLocale(savedLocale);
 
-        // Настройка главного окна
-        setJMenuBar(createMenuBar());
-        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                exit();
-            }
-        });
+        setTitle(localization.getString("window.title"));
 
-        // Обновление интерфейса согласно текущей локали
-        updateLocalizedUI();
-    }
-
-    private void initWindows() {
         gameWindow = new GameWindow();
         addWindow(gameWindow);
         saveState.registerWindow(gameWindow.getNameOfWindow());
@@ -220,6 +217,7 @@ public class MainApplicationFrame extends JFrame implements Save {
         saveState.saveWindowParams(logWindow);
         saveState.saveWindowParams(gameWindow);
         saveState.saveWindowParams(coordinateWindow);
+        saveState.saveLocale(localization.getCurrentLocale()); // Сохраняем локаль
     }
 
     protected LogWindow createLogWindow() {
@@ -228,12 +226,168 @@ public class MainApplicationFrame extends JFrame implements Save {
         logWindow.setSize(300, 800);
         setMinimumSize(logWindow.getSize());
         logWindow.pack();
-        Logger.debug("Протокол работает");
+        Logger.debug(localization.getString("log.working"));
         return logWindow;
     }
 
     protected void addWindow(JInternalFrame frame) {
         desktopPane.add(frame);
         frame.setVisible(true);
+    }
+
+    /**
+     * Создаёт меню приложения.
+     *
+     * @return строка меню
+     */
+    protected JMenuBar createMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+        menuBar.add(generateLookAndFeelMenu());
+        menuBar.add(generateTestMenu());
+        menuBar.add(generateDocumentMenu());
+        menuBar.add(generateLanguageMenu());
+        return menuBar;
+    }
+
+    private JMenu generateLookAndFeelMenu() {
+        JMenu lookAndFeelMenu = new JMenu(localization.getString("menu.display"));
+        lookAndFeelMenu.setMnemonic(KeyEvent.VK_V);
+        lookAndFeelMenu.getAccessibleContext().setAccessibleDescription(
+                localization.getString("menu.display.description"));
+        lookAndFeelMenu.add(createSystemLookAndFeelMenuButton());
+        lookAndFeelMenu.add(createCrossPlatformLookAndFeelMenuButton());
+        return lookAndFeelMenu;
+    }
+
+    private JMenuItem createSystemLookAndFeelMenuButton() {
+        JMenuItem item = new JMenuItem(localization.getString("menu.item.system"), KeyEvent.VK_S);
+        item.addActionListener(event -> {
+            setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            this.invalidate();
+        });
+        return item;
+    }
+
+    private JMenuItem createCrossPlatformLookAndFeelMenuButton() {
+        JMenuItem item = new JMenuItem(localization.getString("menu.item.cross"), KeyEvent.VK_U);
+        item.addActionListener(event -> {
+            setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+            this.invalidate();
+        });
+        return item;
+    }
+
+    private JMenu generateTestMenu() {
+        JMenu testMenu = new JMenu(localization.getString("menu.tests"));
+        testMenu.setMnemonic(KeyEvent.VK_T);
+        testMenu.getAccessibleContext().setAccessibleDescription(
+                localization.getString("menu.tests.description"));
+        testMenu.add(createAddLogMessageButton());
+        return testMenu;
+    }
+
+    private JMenuItem createAddLogMessageButton() {
+        JMenuItem item = new JMenuItem(localization.getString("menu.item.log"), KeyEvent.VK_L);
+        item.addActionListener(event -> Logger.debug(localization.getString("log.new.message")));
+        return item;
+    }
+
+    private JMenu generateDocumentMenu() {
+        JMenu menu = new JMenu(localization.getString("menu.application"));
+        menu.setMnemonic(KeyEvent.VK_D);
+        menu.add(createQuitButton());
+        return menu;
+    }
+
+    private JMenuItem createQuitButton() {
+        JMenuItem item = new JMenuItem(localization.getString("menu.item.exit"));
+        item.setMnemonic(KeyEvent.VK_Q);
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.ALT_MASK));
+        item.setActionCommand("quit");
+        item.addActionListener(event -> exit());
+        return item;
+    }
+
+    private JMenu generateLanguageMenu() {
+        JMenu languageMenu = new JMenu(localization.getString("menu.language"));
+        languageMenu.setMnemonic(KeyEvent.VK_L);
+        languageMenu.getAccessibleContext().setAccessibleDescription(
+                localization.getString("menu.language.description"));
+
+        JMenuItem russianItem = new JMenuItem("Русский");
+        russianItem.addActionListener(e -> changeLocale(new Locale("ru")));
+
+        JMenuItem englishItem = new JMenuItem("English");
+        englishItem.addActionListener(e -> changeLocale(new Locale("en")));
+
+        languageMenu.add(russianItem);
+        languageMenu.add(englishItem);
+
+        return languageMenu;
+    }
+
+    /**
+     * Изменяет локаль приложения и обновляет интерфейс.
+     * @param locale новая локаль
+     */
+    private void changeLocale(Locale locale) {
+        localization.setLocale(locale);
+        updateUIForLocalization();
+        saveState.saveLocale(locale);
+    }
+
+    /**
+     * Обновляет весь интерфейс для текущей локализации.
+     */
+    private void updateUIForLocalization() {
+        // Обновляем заголовки окон
+        setTitle(localization.getString("window.title"));
+        if (gameWindow != null) {
+            gameWindow.setTitle(localization.getString("game.window.title"));
+        }
+        if (logWindow != null) {
+            logWindow.setTitle(localization.getString("log.window.title"));
+        }
+        if (coordinateWindow != null) {
+            coordinateWindow.setTitle(localization.getString("coordinates.window.title"));
+        }
+
+        // Обновляем меню
+        setJMenuBar(createMenuBar());
+
+        // Перерисовываем интерфейс
+        SwingUtilities.updateComponentTreeUI(this);
+    }
+
+    private void setLookAndFeel(String className) {
+        try {
+            UIManager.setLookAndFeel(className);
+            SwingUtilities.updateComponentTreeUI(this);
+        } catch (Exception e) {
+            // Игнорировать ошибки при установке L&F
+        }
+    }
+
+    /**
+     * Метод, вызываемый при завершении работы приложения. Сохраняет состояние и завершает программу.
+     */
+    private void exit() {
+        int response = JOptionPane.showConfirmDialog(
+                this,
+                localization.getString("confirm.exit"),
+                localization.getString("confirm.title"),
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (response == JOptionPane.YES_OPTION) {
+            saveWindowStateBeforeExit();
+            try {
+                saveState.saveToFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            System.exit(0);
+        }
     }
 }
