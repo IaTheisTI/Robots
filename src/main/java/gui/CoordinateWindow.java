@@ -12,6 +12,7 @@ import java.beans.PropertyChangeListener;
  *Окно с текущей позицией робота(координаты)
  * Реагирует на изменения позиции робота через механизм PropertyChangeListener
  */
+
 public class CoordinateWindow extends AbstractWindow implements Save, PropertyChangeListener {
     private final JTextArea textArea;
 
