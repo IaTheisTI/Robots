@@ -8,6 +8,7 @@ public class LocalizationManager {
     private ResourceBundle resourceBundle;
     private Locale currentLocale;
 
+
     private LocalizationManager() {
         // По умолчанию русский язык
         currentLocale = new Locale("ru");
