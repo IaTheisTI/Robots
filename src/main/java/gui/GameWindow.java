@@ -3,6 +3,7 @@ package gui;
 import game.GameController;
 import game.GameVisualizer;
 import game.GameModel;
+import localization.LocalizationManager;
 import state.Save;
 
 import javax.swing.*;
@@ -26,7 +27,7 @@ public class GameWindow extends AbstractWindow implements Save {
      * Настраивает размещение компонентов внутри окна.
      */
     public GameWindow() {
-        super("Игровое поле", 400, 400, 50, 50);
+        super(LocalizationManager.getInstance().getString("game.window.title"), 400, 400, 50, 50);
         model = new GameModel();
         m_visualizer = new GameVisualizer(model);
         new GameController(model, m_visualizer);

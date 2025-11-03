@@ -2,6 +2,7 @@ package state;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -104,6 +105,21 @@ public class SaveState {
             windowParams.put(windowName + "." + entry.getKey(),
                     entry.getValue());
         }
+    }
+
+    public void saveLocale(Locale locale) {
+        windowParams.put("locale.language", locale.getLanguage().hashCode());
+    }
+
+    public Locale loadLocale() {
+        if (windowParams.containsKey("locale.language")) {
+            int langCode = windowParams.get("locale.language");
+            // Простая логика для определения языка по хеш-коду
+            if (langCode == "en".hashCode()) {
+                return new Locale("en");
+            }
+        }
+        return new Locale("ru"); // По умолчанию русский
     }
 
 

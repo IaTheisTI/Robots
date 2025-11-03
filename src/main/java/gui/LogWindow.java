@@ -1,8 +1,10 @@
 package gui;
 
+import localization.LocalizationManager;
 import log.LogChangeListener;
 import log.LogEntry;
 import log.LogWindowSource;
+import log.Logger;
 import state.Save;
 
 import javax.swing.*;
@@ -14,7 +16,7 @@ public class LogWindow extends AbstractWindow implements LogChangeListener, Save
     private final TextArea m_logContent;
 
     public LogWindow(LogWindowSource logSource) {
-        super("Протокол работы", 300, 800, 10, 10);
+        super(LocalizationManager.getInstance().getString("log.window.title"), 300, 800, 10, 10);
         m_logSource = logSource;
         m_logSource.registerListener(this);
 
@@ -26,6 +28,7 @@ public class LogWindow extends AbstractWindow implements LogChangeListener, Save
         getContentPane().add(panel);
         pack();
         updateLogContent();
+        Logger.debug(LocalizationManager.getInstance().getString("log.working"));
     }
 
     private void updateLogContent() {
