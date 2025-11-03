@@ -8,16 +8,24 @@ import state.Save;
 
 import javax.swing.*;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 /**
- * Окно игрового поля с поддержкой локализации
+ * Окно игрового поля, отображающее движение робота и его цель.
+ * Наследует базовое поведение от {@link AbstractWindow} и реализует интерфейс {@link Save}
+ * для поддержки сохранения/восстановления состояния окна.
+ * Создает и связывает между собой модель, визуализатор и контроллер.
  */
-public class GameWindow extends AbstractWindow implements Save, PropertyChangeListener {
-    private final GameVisualizer visualizer;
+public class GameWindow extends AbstractWindow implements Save {
+    /** Компонент, отвечающий за визуализацию игрового поля и робота */
+    private final GameVisualizer m_visualizer;
+
+    /** Модель, содержащая логику движения робота и хранения его состояния */
     public final GameModel model;
 
+    /**
+     * Конструктор окна. Инициализирует модель, визуализатор и контроллер.
+     * Настраивает размещение компонентов внутри окна.
+     */
     public GameWindow() {
         super(LocalizationManager.getInstance().getString("game.window.title"), 400, 400, 50, 50);
         model = new GameModel();
@@ -25,28 +33,24 @@ public class GameWindow extends AbstractWindow implements Save, PropertyChangeLi
         new GameController(model, m_visualizer);
 
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(visualizer, BorderLayout.CENTER);
+        panel.add(m_visualizer, BorderLayout.CENTER);
         getContentPane().add(panel);
-        pack();
-
-        // Регистрация слушателя изменений локализации
-        LocalizationManager.addLocaleChangeListener(this);
+        pack(); // подгоняет размеры окна под содержимое
     }
 
+    /**
+     * Возвращает уникальное имя окна, используется при сохранении состояния.
+     * @return строковое имя окна
+     */
     @Override
     public String getNameOfWindow() {
         return "GameWindow";
     }
 
+    /**
+     * Обновляет визуальное отображение игрового поля.
+     */
     public void updateGame() {
-        visualizer.repaint();
-    }
-
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-        if ("locale".equals(evt.getPropertyName())) {
-            setTitle(LocalizationManager.getString("game.title"));
-            updateGame();
-        }
+        m_visualizer.repaint();
     }
 }
