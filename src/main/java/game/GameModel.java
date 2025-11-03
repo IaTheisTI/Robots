@@ -65,13 +65,12 @@ public class GameModel {
         }
 
         pcs.firePropertyChange("position", new double[]{oldX, oldY}, new double[]{x, y});
+        pcs.firePropertyChange("direction", angleDiff, direction);
     }
 
     /**
      * Устанавливает новые координаты цели для робота.
-     * <p>
      * После установки координат уведомляет слушателей об изменении цели.
-     *
      * @param x координата X цели
      * @param y координата Y цели
      */
